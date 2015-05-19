@@ -1,4 +1,4 @@
-define(["jquery", "./grid", "./camera", "./player"], function($, Grid, Camera, Blob) {
+define(["jquery", "quadtree", "./grid", "./camera", "./blob"], function($, Quadtree, Grid, Camera, Blob) {
 
 	//Set up game
 	var grid = new Grid(50);
@@ -26,12 +26,19 @@ define(["jquery", "./grid", "./camera", "./player"], function($, Grid, Camera, B
 		mouse.y = event.pageY;
 	});
 
-
+	//Set up quadtree
 	var blobs = [
 		new Blob(50, "#00FF00", 50, 200),
 		new Blob(80, "#0000FF", 250, -150),
 		new Blob(123, "#FF0000", -300, -50)
 	];
+
+	var tree = new Quadtree({
+		x: -2000,
+		y: -2000,
+		width: 4000,
+		height: 4000
+	}, 20, 6);
 
 	var tick = 0;
 
@@ -45,6 +52,7 @@ define(["jquery", "./grid", "./camera", "./player"], function($, Grid, Camera, B
 		g.save();
 
 		tick++;
+
 
 		var deltaX = (mouse.x - width/2),
 			deltaY = (mouse.y - height/2),
@@ -68,16 +76,23 @@ define(["jquery", "./grid", "./camera", "./player"], function($, Grid, Camera, B
 		g.translate(-camera.x * camera.scale + width / 2, -camera.y * camera.scale + height / 2);
 		g.scale(camera.scale, camera.scale);
 
-		$.each(blobs, function(i, blob1) {
+		tree.clear();
+		$.each(blobs, function(i, blob) {
+			tree.insert(blob);
 			g.beginPath();
-			g.fillStyle = blob1.color;
+			g.fillStyle = blob.color;
 			g.strokeStyle = "#000";
-			g.arc(blob1.x, blob1.y, blob1.mass, 0, Math.PI * 2, true);
+			g.arc(blob.x, blob.y, blob.radius, 0, Math.PI * 2, true);
 			g.fill();
-			$.each(blobs, function(i, blob2) {
-				if (blob1.mass - 20 > blob2.mass) {
-					if (Math.pow(blob1.x - blob2.x, 2) + Math.pow(blob1.y - blob2.y, 2) <= Math.pow(blob1.mass, 2)) {
-						blob2.color = "#000";
+		});
+
+		$.each(blobs, function(i, blob1) {
+			$.each(tree.retrieve(blob1), function(i, blob2) {
+				if (blob1.color != blob2.color) { //TODO: check if same player
+					if (blob1.radius - 20 > blob2.radius) {
+						if (Math.pow(blob1.x - blob2.x, 2) + Math.pow(blob1.y - blob2.y, 2) <= Math.pow(blob1.radius, 2)) {
+							blob2.color = "#000";
+						}
 					}
 				}
 			});
