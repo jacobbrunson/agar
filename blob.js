@@ -1,5 +1,6 @@
 define(function() {
-	function blob(radius, color, x, y) {
+	function blob(player, radius, color, x, y) {
+		this.player = player;
 		this.radius = radius;
 		this.color = color;
 		this.x = x;

@@ -1,4 +1,4 @@
-define(["jquery", "quadtree", "./grid", "./camera", "./blob"], function($, Quadtree, Grid, Camera, Blob) {
+define(["jquery", "quadtree", "./grid", "./camera", "./blob", "./player"], function($, Quadtree, Grid, Camera, Blob, Player) {
 
 	//Set up game
 	var grid = new Grid(50);
@@ -27,10 +27,10 @@ define(["jquery", "quadtree", "./grid", "./camera", "./blob"], function($, Quadt
 	});
 
 	//Set up quadtree
-	var blobs = [
-		new Blob(50, "#00FF00", 50, 200),
-		new Blob(80, "#0000FF", 250, -150),
-		new Blob(123, "#FF0000", -300, -50)
+	var players = [
+		new Player("fake1", 50, "#00FF00", 50, 200),
+		new Player("fake2", 80, "#0000FF", 250, -150),
+		new Player("fruitcup", 123, "#FF0000", -300, -50)
 	];
 
 	var tree = new Quadtree({
@@ -59,16 +59,11 @@ define(["jquery", "quadtree", "./grid", "./camera", "./blob"], function($, Quadt
 			length = Math.sqrt(Math.pow(deltaX, 2) + Math.pow(deltaY, 2)),
 			speed = 5;
 
-		blobs[2].x += deltaX / length * speed;
-		blobs[2].y += deltaY / length * speed;
+		players[2].blobs[0].x += deltaX / length * speed;
+		players[2].blobs[0].y += deltaY / length * speed;
 
-		blobs[0].y += Math.cos(tick / 20) * 1.5;
-
-		blobs[1].x += Math.sin(tick / 10);
-		blobs[1].y += Math.cos(tick / 10);
-
-		camera.x = blobs[2].x;
-		camera.y = blobs[2].y;
+		camera.x = players[2].blobs[0].x;
+		camera.y = players[2].blobs[0].y;
 		//camera.scale = ...
 
 		grid.render(g, width, height, camera);
@@ -77,24 +72,33 @@ define(["jquery", "quadtree", "./grid", "./camera", "./blob"], function($, Quadt
 		g.scale(camera.scale, camera.scale);
 
 		tree.clear();
-		$.each(blobs, function(i, blob) {
-			tree.insert(blob);
-			g.beginPath();
-			g.fillStyle = blob.color;
-			g.strokeStyle = "#000";
-			g.arc(blob.x, blob.y, blob.radius, 0, Math.PI * 2, true);
-			g.fill();
+		$.each(players, function(i, player) {
+			$.each(player.blobs, function(i, blob) {
+				tree.insert(blob);
+				g.beginPath();
+				g.fillStyle = blob.color;
+				g.strokeStyle = "#000";
+				g.arc(blob.x, blob.y, blob.radius, 0, Math.PI * 2, true);
+				g.fill();
+			});
 		});
 
-		$.each(blobs, function(i, blob1) {
-			$.each(tree.retrieve(blob1), function(i, blob2) {
-				if (blob1.color != blob2.color) { //TODO: check if same player
-					if (blob1.radius - 20 > blob2.radius) {
-						if (Math.pow(blob1.x - blob2.x, 2) + Math.pow(blob1.y - blob2.y, 2) <= Math.pow(blob1.radius, 2)) {
-							blob2.color = "#000";
+		$.each(players, function(_, player1) {
+			$.each(player1.blobs, function(_, blob1) {
+				$.each(tree.retrieve(blob1), function(i, blob2) {
+					if (blob1.player != blob2.player) {
+						if (blob1.radius - 20 > blob2.radius) {
+							if (Math.pow(blob1.x - blob2.x, 2) + Math.pow(blob1.y - blob2.y, 2) <= Math.pow(blob1.radius, 2)) {
+								blob1.radius += blob2.radius;
+								$.each(players, function(_, player2) {
+									if (blob2.player == player2.id) {
+										player2.blobs.splice(i, 1);
+									}
+								});
+							}
 						}
 					}
-				}
+				});
 			});
 		});
 
