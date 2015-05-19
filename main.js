@@ -106,20 +106,17 @@ define(["jquery", "quadtree", "./grid", "./camera", "./blob", "./player"], funct
 							//IDRK WHAT IM DOING LOL
 							var dist = blob1.radius + blob2.radius - Math.sqrt(Math.pow(blob1.x - blob2.x, 2) + Math.pow(blob1.y - blob2.y, 2));
 							if (dist >= 0) {
-								//var dist = Math.sqrt(distSquared);
-								//console.log(dist);
-								var l1 = Math.sqrt(Math.pow(blob1.vx, 2) + Math.pow(blob1.vy, 2)); //TODO: account for mass
-								var l2 = Math.sqrt(Math.pow(blob2.vx, 2) + Math.pow(blob2.vy, 2));
+								var px = blob1.x - blob2.x,
+									py = blob1.y - blob2.y,
+									vx = blob1.vx - blob2.vx,
+									vy = blob1.vy - blob2.vy;
+								var t = (Math.sqrt(px*px + py*py) - (blob1.radius+blob2.radius)) / Math.sqrt(vx*vx + vy*vy);
 
-								var d1 = dist * l1 / (l1 + l2);
-								var d2 = dist * l2 / (l1 + l2);
+								blob1.x += blob1.vx * t;
+								blob1.y += blob1.vy * t;
+								blob2.x += blob2.vx * t;
+								blob2.y += blob2.vy * t;
 
-								console.log(l1, l2, "|", d1, d2);
-	
-								blob1.x -= blob1.vx / l1 * d1;
-								blob1.y -= blob1.vy / l1 * d1;
-								blob2.x -= blob2.vx / l2 * d2;
-								blob2.y -= blob2.vy / l2 * d2;
 							}
 						}
 					}
