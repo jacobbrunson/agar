@@ -34,6 +34,9 @@ define(["jquery", "quadtree", "./grid", "./camera", "./blob", "./player"], funct
 	];
 
 	players[2].blobs[1] = new Blob(players[2].id, 75, "#FF0000", -120, -50);
+	players[2].blobs[2] = new Blob(players[2].id, 30, "#FF0000", -120, -500);
+	players[2].blobs[3] = new Blob(players[2].id, 45, "#FF0000", -500, -500);
+	players[2].blobs[4] = new Blob(players[2].id, 60, "#FF0000", 500, -500);
 
 	var tree = new Quadtree({
 		x: -2000,
@@ -59,7 +62,7 @@ define(["jquery", "quadtree", "./grid", "./camera", "./blob", "./player"], funct
 			var deltaX = (mouse.x - width/2 + camera.x - blob.x),
 				deltaY = (mouse.y - height/2 + camera.y - blob.y),
 				length = Math.sqrt(Math.pow(deltaX, 2) + Math.pow(deltaY, 2)),
-				speed = 375 / blob.radius;
+				speed = 100 / blob.radius;
 			blob.vx = deltaX / length * speed * Math.min(1, Math.pow(deltaX / blob.radius, 2));
 			blob.vy = deltaY / length * speed * Math.min(1, Math.pow(deltaY / blob.radius, 2));
 			blob.x += blob.vx;
@@ -80,6 +83,13 @@ define(["jquery", "quadtree", "./grid", "./camera", "./blob", "./player"], funct
 			$.each(player.blobs, function(i, blob) {
 				tree.insert(blob);
 				//blob.render(g);
+			});
+		});
+
+		$.each(players, function(i, player) {
+			$.each(player.blobs, function(i, blob) {
+				//tree.insert(blob);
+				blob.render(g);
 			});
 		});
 
@@ -105,17 +115,23 @@ define(["jquery", "quadtree", "./grid", "./camera", "./blob", "./player"], funct
 						} else if (blob1.radius != blob2.radius || blob1.x != blob2.x || blob1.y != blob2.y) {
 							//IDRK WHAT IM DOING LOL
 							var dist = blob1.radius + blob2.radius - Math.sqrt(Math.pow(blob1.x - blob2.x, 2) + Math.pow(blob1.y - blob2.y, 2));
-							if (dist >= 0) {
+							if (dist >= 1) {
 								var px = blob1.x - blob2.x,
 									py = blob1.y - blob2.y,
 									vx = blob1.vx - blob2.vx,
 									vy = blob1.vy - blob2.vy;
 								var t = (Math.sqrt(px*px + py*py) - (blob1.radius+blob2.radius)) / Math.sqrt(vx*vx + vy*vy);
 
-								blob1.x += blob1.vx * t;
-								blob1.y += blob1.vy * t;
-								blob2.x += blob2.vx * t;
-								blob2.y += blob2.vy * t;
+								var b1 = blob1.radius / (blob1.radius + blob2.radius),
+									b2 = blob2.radius / (blob1.radius + blob2.radius);
+
+								var mx = blob1.vx*b1 + blob2.vx*b2,
+									my = blob1.vy*b1 + blob2.vy*b2;
+
+								blob1.x += blob1.vx * t + mx;
+								blob1.y += blob1.vy * t + my;
+								blob2.x += blob2.vx * t + mx;
+								blob2.y += blob2.vy * t + my;
 
 							}
 						}
@@ -124,12 +140,7 @@ define(["jquery", "quadtree", "./grid", "./camera", "./blob", "./player"], funct
 			});
 		});
 
-$.each(players, function(i, player) {
-			$.each(player.blobs, function(i, blob) {
-				//tree.insert(blob);
-				blob.render(g);
-			});
-		});
+
 
 		g.restore();
 
